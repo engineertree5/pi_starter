@@ -54,12 +54,13 @@ def random_picks():
         # shortname = company_symbol.get_info()['shortName']
         
 
-        data['50d_SMA'] = data.Close.rolling(window=50).mean()
-        data['100d_SMA'] = data.Close.rolling(window=100).mean()
-        data['200d_SMA'] = data.Close.rolling(window=200).mean()
+        data['50d_EMA'] = data.Close.ewm(span=50,min_periods=0,adjust=False,ignore_na=False).mean()
+        data['20d_EMA'] = data.Close.ewm(span=20,min_periods=0,adjust=False,ignore_na=False).mean()
+        data['100d_EMA'] = data.Close.ewm(span=100,min_periods=0,adjust=False,ignore_na=False).mean()
+        
 
         fig, ax = plt.subplots()
-        data[['Close', '50d_SMA', '100d_SMA', '200d_SMA']].plot(title=f"${stock_pick} STOCK {d_dash}", figsize=(10,5), ax=ax)
+        data[['Close', '50d_EMA', '100d_EMA', '20d_EMA']].plot(title=f"${stock_pick} STOCK {d_dash}", figsize=(10,5), ax=ax)
         # Don't allow the axis to be on top of your data
         ax.set_axisbelow(True)
         ax.grid()
