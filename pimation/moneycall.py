@@ -4,7 +4,7 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 from random import sample
 import csv
-from datetime import date
+import datetime as dt
 import matplotlib.pyplot as plt
 from matplotlib import style
 from mpl_finance import candlestick_ohlc
@@ -25,9 +25,6 @@ user = api.get_user('lordfili')
 
 
 # GLOBAL VARS
-today = date.today()
-d_slash = today.strftime("%Y/%m/%d")
-d_dash = today.strftime("%Y-%m-%d")
 watchlist = ['MSFT', 'V', 'DLR', 'CONE', 'PING', 'AMD', 'O', 'BAM', 'DDOG', 'ADBE', 'NKE', 'CHWY', 'NOK', 'BIP', 'O', 'DOCU', 'QCOM', 'BABA', 'DIS', 'ZS', 'NVDA', 'CCI', 'AMT', 'RTX']
 chart_dir = '/home/pi/Documents/automation/awtybot/'
 days = 365 # Stock data to chart against
@@ -37,13 +34,10 @@ def candle_picks():
     style.use('ggplot')
     stock_list = sample(watchlist, 4)
     print(f'random stock pick from watchlist ${stock_list}')
-    chart_dir = '/Users/MisterFili/Documents/misc_files/'
     #set current date
-    start = date.datetime(2018, 1,1)
-    end = date.datetime(2020, 6,15)
-    today = date.datetime.now().date()
-    end = date.datetime(today.year, today.month,today.day)
-    start = date.datetime(today.year -1, today.month,today.day)
+    today = dt.datetime.now().date()
+    end = dt.datetime(today.year, today.month,today.day)
+    start = dt.datetime(today.year -1, today.month,today.day)
     pick_info = {}
     pick_info['symbols'] = {}
     for stock_pick in stock_list:
