@@ -30,45 +30,47 @@ def random_picks():
         # df.to_csv(f'{stock_pick}.csv')
         df = pd.read_csv(f'{stock_pick}.csv', parse_dates=True, index_col=0)
         #  If True -> try parsing the index. dates are stored @ column 0
-        invert_df = df.sort_index(axis=0, ascending=False)
+
         #CHECK TO SEE IF MARKETS ARE OPEN
+        invert_df = df.sort_index(axis=0, ascending=False)
         mkt_date_check = invert_df.loc[d_dash]
-        if mkt_date_check.empty == True:
-            print('dataframe empty!\n!!MARKET CLOSED!!')
-            print('exiting')
-            exit(1)
-            # raise RuntimeError('data is empty')
-        else:
-            print('MARKET OPEN!')
-        
+        # if mkt_date_check.empty == True:
+        #     print('dataframe empty!\n!!MARKET CLOSED!!')
+        #     print('exiting')
+        #     exit(1)
+        #     # raise RuntimeError('data is empty')
+        # else:
+        #     print('MARKET OPEN!')
+        # Resampling the time series data based on months 
+        # we apply it on stock close price 
+        # 'M' indicates month 
+        # monthly_resampled_data = df.close.resample('M').mean() 
         df['200d_EMA'] = df.Close.ewm(span=200,min_periods=0,adjust=False,ignore_na=False).mean()
         df['50d_EMA'] = df.Close.ewm(span=50,min_periods=0,adjust=False,ignore_na=False).mean()     
         df['20d_EMA'] = df.Close.ewm(span=20,min_periods=0,adjust=False,ignore_na=False).mean()   
 
-        df_ohlc = df['Adj Close'].resample('5D').ohlc()
+        df_ohlc = df['Adj Close'].resample('W-Fri').ohlc()
+        # df_ohlc = df['Adj Close'].resample('5D').ohlc() THIS WAS A MISTAKE ######
         # new dataframe, based on df['Adj Close']column, resamped with a 10 day window
 
-        df_volume = df['Volume'].resample('5D').sum()
-        edition = 5
+        df_volume = df['Volume'].resample('W-Fri').sum() #This will give you ohlc data for the week ending on a Friday.
+        edition = 87
         df_ohlc.reset_index(inplace=True)
         # don't want date to be an index anymore, reset_index
         # dates is just a regular column. Next, we convert it
         df_ohlc['Date'] = df_ohlc['Date'].map(mdates.date2num)
 
         ax1 = plt.subplot2grid((6,1), (0,0), rowspan=4, colspan=1, title=f"${stock_pick} STOCK")
-        ax2 = plt.subplot2grid((6,1), (5,0), rowspan=1, colspan=1, sharex=ax1, label='Volume')
-        # Plt.subplot2grid(shape, location, rowspan, colspan)
-        # candlestick_ohlc(ax, ohlc.values, width=0.6, colorup='green', colordown='red', alpha=0.8)
+        # ax2 = plt.subplot2grid((6,1), (5,0), rowspan=1, colspan=1, sharex=ax1, label='Volume')
+        
         candlestick_ohlc(ax1, df_ohlc.values, width=2, colorup='g', alpha=0.7)
         
         ax1.plot(df.index, df[['200d_EMA']], label='200d_EMA')
         ax1.plot(df.index, df[['50d_EMA']], label='50d_EMA')
         ax1.plot(df.index, df[['20d_EMA']], label='20d_EMA')
-        ax2.fill_between(df_volume.index.map(mdates.date2num), df_volume.values, 0) #x and y 
+        # ax2.fill_between(df_volume.index.map(mdates.date2num), df_volume.values, 0) #x and y 
         ax1.xaxis_date()
         ax1.legend()
-        # fig= plt.figure(num=1, figsize=(6,3))
+
         plt.savefig(f'{chart_dir}{stock_pick}{edition}.png', bbox_inches='tight')
-        print(chart_dir)
-        # plt.show()
 random_picks()
