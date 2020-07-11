@@ -46,8 +46,13 @@ def random_picks():
         # 'M' indicates month 
         # monthly_resampled_data = df.close.resample('M').mean() 
         df['200d_EMA'] = df.Close.ewm(span=200,min_periods=0,adjust=False,ignore_na=False).mean()
-        df['50d_EMA'] = df.Close.ewm(span=50,min_periods=0,adjust=False,ignore_na=False).mean()     
-        df['20d_EMA'] = df.Close.ewm(span=20,min_periods=0,adjust=False,ignore_na=False).mean()   
+        df['26d_EMA'] = df.Close.ewm(span=26,min_periods=0,adjust=False,ignore_na=False).mean()     
+        df['12d_EMA'] = df.Close.ewm(span=12,min_periods=0,adjust=False,ignore_na=False).mean()   
+
+        #calculate the MCAD
+        df['mcad'] = df['12d_EMA'] - df['26d_EMA']
+
+        df['macdsignal'] = df['mcad'].ewm(span=9, adjust=False).mean()
 
         df_ohlc = df['Adj Close'].resample('W-Fri').ohlc()
         # df_ohlc = df['Adj Close'].resample('5D').ohlc() THIS WAS A MISTAKE ######
@@ -61,16 +66,18 @@ def random_picks():
         df_ohlc['Date'] = df_ohlc['Date'].map(mdates.date2num)
 
         ax1 = plt.subplot2grid((6,1), (0,0), rowspan=4, colspan=1, title=f"${stock_pick} STOCK")
-        # ax2 = plt.subplot2grid((6,1), (5,0), rowspan=1, colspan=1, sharex=ax1, label='Volume')
+        ax2 = plt.subplot2grid((6,1), (5,0), rowspan=1, colspan=1, sharex=ax1, title="MACD")
         
         candlestick_ohlc(ax1, df_ohlc.values, width=2, colorup='g', alpha=0.7)
         
-        ax1.plot(df.index, df[['200d_EMA']], label='200d_EMA')
-        ax1.plot(df.index, df[['50d_EMA']], label='50d_EMA')
-        ax1.plot(df.index, df[['20d_EMA']], label='20d_EMA')
+        ax2.plot(df.index, df[['macdsignal']], label='Signal')
+        ax2.plot(df.index, df[['mcad']], label='MCAD')
+        ax1.plot(df.index, df[['26d_EMA']], label='26d_EMA')
+        ax1.plot(df.index, df[['12d_EMA']], label='12d_EMA')
         # ax2.fill_between(df_volume.index.map(mdates.date2num), df_volume.values, 0) #x and y 
-        ax1.xaxis_date()
+        ax1.xaxis_date() # converts the axis from the raw mdate numbers to dates.
         ax1.legend()
+        ax2.legend()
 
         plt.savefig(f'{chart_dir}{stock_pick}{edition}.png', bbox_inches='tight')
 random_picks()
