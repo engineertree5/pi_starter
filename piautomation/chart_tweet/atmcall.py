@@ -46,19 +46,18 @@ def random_picks():
         # 'M' indicates month 
         # monthly_resampled_data = df.close.resample('M').mean() 
         df['200d_EMA'] = df.Close.ewm(span=200,min_periods=0,adjust=False,ignore_na=False).mean()
+        df['50d_EMA'] = df.Close.ewm(span=50,min_periods=0,adjust=False,ignore_na=False).mean()     
+        df['20d_EMA'] = df.Close.ewm(span=20,min_periods=0,adjust=False,ignore_na=False).mean()     
         df['26d_EMA'] = df.Close.ewm(span=26,min_periods=0,adjust=False,ignore_na=False).mean()     
         df['12d_EMA'] = df.Close.ewm(span=12,min_periods=0,adjust=False,ignore_na=False).mean()   
 
         #calculate the MCAD
         df['mcad'] = df['12d_EMA'] - df['26d_EMA']
-
         df['macdsignal'] = df['mcad'].ewm(span=9, adjust=False).mean()
 
         df_ohlc = df['Adj Close'].resample('W-Fri').ohlc()
-        # df_ohlc = df['Adj Close'].resample('5D').ohlc() THIS WAS A MISTAKE ######
-        # new dataframe, based on df['Adj Close']column, resamped with a 10 day window
-
-        df_volume = df['Volume'].resample('W-Fri').sum() #This will give you ohlc data for the week ending on a Friday.
+        # df_volume = df['Volume'].resample('W-Fri').sum() #This will give you ohlc data for the week ending on a Friday.
+        
         edition = 87
         df_ohlc.reset_index(inplace=True)
         # don't want date to be an index anymore, reset_index
@@ -72,8 +71,9 @@ def random_picks():
         
         ax2.plot(df.index, df[['macdsignal']], label='Signal')
         ax2.plot(df.index, df[['mcad']], label='MCAD')
-        ax1.plot(df.index, df[['26d_EMA']], label='26d_EMA')
-        ax1.plot(df.index, df[['12d_EMA']], label='12d_EMA')
+        ax1.plot(df.index, df[['20d_EMA']], label='20d_EMA')
+        ax1.plot(df.index, df[['50d_EMA']], label='50d_EMA')
+        ax1.plot(df.index, df[['200d_EMA']], label='200d_EMA')
         # ax2.fill_between(df_volume.index.map(mdates.date2num), df_volume.values, 0) #x and y 
         ax1.xaxis_date() # converts the axis from the raw mdate numbers to dates.
         ax1.legend()
