@@ -25,7 +25,7 @@ user = api.get_user('lordfili')
 
 
 # GLOBAL VARS
-watchlist = ['MSFT', 'V', 'DLR', 'CONE', 'PING', 'AMD', 'O', 'BEP', 'DDOG', 'ADBE', 'NKE', 'CHWY', 'NOK', 'BIP', 'O', 'DOCU', 'QCOM', 'BABA', 'DIS', 'ZS', 'NVDA', 'CCI', 'AMT', 'RTX', 'BYND', 'RDFN', 'PI', 'ROKU', 'TDOC', 'ERIC', 'TCEHY', 'PINS']
+watchlist = ['MSFT', 'V', 'DLR', 'CONE', 'PING', 'AMD', 'O', 'BEP', 'DDOG', 'ADBE', 'NKE', 'CHWY', 'NOK', 'BIP', 'O', 'DOCU', 'QCOM', 'BABA', 'DIS', 'ZS', 'NVDA', 'CCI', 'AMT', 'RTX', 'BYND', 'RDFN', 'PI', 'ROKU', 'TDOC', 'ERIC', 'TCEHY', 'PINS', 'FSLY', 'BIDU', 'MELI']
 chart_dir = '/home/pi/Documents/automation/awtybot/'
 days = 365 # Stock data to chart against
 
@@ -35,15 +35,14 @@ def candle_picks():
     stock_list = sample(watchlist, 4)
     print(f'random stock pick from watchlist ${stock_list}')
     chart_dir = '/home/pi/Documents/automation/awtybot/'
-    # #set current date
-    # start = date.datetime(2018, 1,1)
-    # end = date.datetime(2020, 6,15)
+    #set current date
     today = dt.datetime.now().date()
     end = dt.datetime(today.year, today.month,today.day)
     start = dt.datetime(today.year -1, today.month,today.day)
     d_dash = today.strftime("%Y-%m-%d")
     pick_info = {}
     pick_info['symbols'] = {}
+
     for stock_pick in stock_list:
         company_symbol = yf.Ticker(f'{stock_pick}')
         try:
@@ -69,28 +68,36 @@ def candle_picks():
         else:
             print('MARKET OPEN!')
         
-
         df['200d_EMA'] = df.Close.ewm(span=200,min_periods=0,adjust=False,ignore_na=False).mean()
         df['50d_EMA'] = df.Close.ewm(span=50,min_periods=0,adjust=False,ignore_na=False).mean()     
         df['20d_EMA'] = df.Close.ewm(span=20,min_periods=0,adjust=False,ignore_na=False).mean()     
-        df_ohlc = df['Adj Close'].resample('10D').ohlc()
-        df_volume = df['Volume'].resample('10D').sum()
+        df['26d_EMA'] = df.Close.ewm(span=26,min_periods=0,adjust=False,ignore_na=False).mean()     
+        df['12d_EMA'] = df.Close.ewm(span=12,min_periods=0,adjust=False,ignore_na=False).mean()   
+
+        #calculate the MCAD
+        df['mcad'] = df['12d_EMA'] - df['26d_EMA']
+        df['macdsignal'] = df['mcad'].ewm(span=9, adjust=False).mean()
+
+        df_ohlc = df['Adj Close'].resample('W-Fri').ohlc()
 
         df_ohlc.reset_index(inplace=True)
+        # don't want date to be an index anymore, reset_index
+        # dates is just a regular column. Next, we convert it
         df_ohlc['Date'] = df_ohlc['Date'].map(mdates.date2num)
 
         ax1 = plt.subplot2grid((6,1), (0,0), rowspan=4, colspan=1, title=f"${stock_pick} STOCK")
-        ax2 = plt.subplot2grid((6,1), (5,0), rowspan=1, colspan=1, sharex=ax1, label='Volume')
-        # Plt.subplot2grid(shape, location, rowspan, colspan)
+        ax2 = plt.subplot2grid((6,1), (5,0), rowspan=1, colspan=1, sharex=ax1, title="MACD")
+        
+        candlestick_ohlc(ax1, df_ohlc.values, width=2, colorup='g', alpha=0.7)
 
-        candlestick_ohlc(ax1, df_ohlc.values, width=2, colorup='g')
-        ax1.plot(df.index, df[['200d_EMA']], label='200d_EMA')
-        ax1.plot(df.index, df[['50d_EMA']], label='50d_EMA')
+        ax2.plot(df.index, df[['macdsignal']], label='Signal')
+        ax2.plot(df.index, df[['mcad']], label='MCAD')
         ax1.plot(df.index, df[['20d_EMA']], label='20d_EMA')
-        ax2.fill_between(df_volume.index.map(mdates.date2num), df_volume.values, 0) #x and y 
-        ax1.xaxis_date()
+        ax1.plot(df.index, df[['50d_EMA']], label='50d_EMA')
+        ax1.plot(df.index, df[['200d_EMA']], label='200d_EMA')
+        ax1.xaxis_date() # converts the axis from the raw mdate numbers to dates.
         ax1.legend()
-        # fig= plt.figure(num=1, figsize=(6,3))
+        ax2.legend()
         plt.savefig(f'{chart_dir}{stock_pick}.png', bbox_inches='tight')
         # plt.show()
     return pick_info
