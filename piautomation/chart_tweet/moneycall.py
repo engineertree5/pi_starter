@@ -25,7 +25,7 @@ user = api.get_user('lordfili')
 
 
 # GLOBAL VARS
-watchlist = ['MSFT', 'V', 'DLR', 'CONE', 'PING', 'AMD', 'ETSY', 'BEP', 'DDOG', 'ADBE', 'ZG', 'CHWY', 'NOK', 'BIP', 'SQ', 'DOCU', 'ATVI', 'BABA', 'DIS', 'ZS', 'NVDA', 'CCI', 'AMT', 'RTX', 'BYND', 'RDFN', 'BL', 'ROKU', 'TDOC', 'ERIC', 'TCEHY', 'PINS', 'FSLY', 'BIDU', 'MELI', 'RGEN', 'RKT', 'SLP', 'CRM', 'NVCR' ]
+watchlist = ['MSFT', 'V', 'DLR', 'CONE', 'PING', 'AMD', 'BEP', 'DDOG', 'ADBE', 'CHWY', 'NOK', 'BIP', 'DOCU', 'QCOM', 'BABA', 'ZS', 'ZG', 'NVDA', 'CCI', 'BYND', 'RDFN', 'ROKU', 'TDOC', 'ERIC', 'TCEHY', 'PINS', 'FSLY', 'BIDU', 'MELI', 'OKTA', 'SE', 'PING', 'TSM', 'GMED', 'ATVI', 'TTWO', 'ETSY', 'BL', 'ZG', 'CRM', 'SQ', 'RGEN', 'SLP', 'RKT']
 chart_dir = '/home/pi/Documents/automation/awtybot/'
 days = 365 # Stock data to chart against
 
