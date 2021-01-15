@@ -8,10 +8,18 @@ import subprocess
 import math
 import gspread
 from os import system
-
+###
+import tweepy
+from secrets import *
 # This script will be used to follow, update, and show my investing progress throughout the year(s) to come. 
 ### HOW DOES IT WORK ###
 # Pull in .csv file which has stock picks
+auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+auth.set_access_token(access_token, access_secret)
+
+# constructing API instance
+api = tweepy.API(auth)
+user = api.get_user('lordfili')
 
 def get_mkt_cap(n):
     millnames = ['',' Thousand','M','B','T']
@@ -61,7 +69,7 @@ def get_portfolio(portfolio):
             # previousClose = company.info['previousClose']
             market_close = get_close(company)
             #### Assignments take place
-            # df.loc[df['Symbol'] == f'{symbol}', 'sector'] = f'{sector}' # not necessary right now
+            df.loc[df['Symbol'] == f'{symbol}', 'sector'] = f'{sector}' # not necessary right now
             df.loc[df['Symbol'] == f'{symbol}', 'PS_TTM'] = f'{PS_TTM}'
             # df.loc[df['Symbol'] == f'{symbol}', '200d_ma'] = f'{_200d_ma}' # not necessary right now
             df.loc[df['Symbol'] == f'{symbol}', '50d_ma'] = f'{_50d_ma}'
@@ -83,47 +91,41 @@ def get_portfolio(portfolio):
         df['total_gain%'] = pd.to_numeric(df['total_gain%']) #convert to numeric value
         df['total_gain%'] = ((df['market_close'] - df['purchase_price']) / df['purchase_price'] * 100 ).round(2)
         df['above_50dma'] = np.where((df['market_close'] > df['50d_ma']), True, False)
-        
-        
-        
+                
     except KeyError as err:
         print(f'error {KeyError}')
 
+    df.sort_values('Symbol')
     answer = int(df['total_gain%'].sum(skipna=True))
     total_count = df['PS_TTM'].count()
     total_percent = answer / total_count
     df['overall_%_gain'] ='' # creating a column called overall_%_gain
     df['overall_%_gain'][0] = round(total_percent, 2) # w/ use of '({do_math_here})' we insert answer var into the 0 index of column
     
-    
-    #save results to file
-    df.to_csv(f'/home/pi/Desktop/{portfolio}.csv', index=False)
-    print(df)
+    df.to_csv(f'/home/pi/Desktop/{portfolio}.csv', index=False) #save results to file
 
-
-# line = (df['gain%'].append({'gain%':answer}, ignore_index=True))
 def push_csv(file,portfolio):
-    while True:
-        try:  
-            gistfile = file
-            ## command to run - storing fo##
-            list_cmd = f"gist list | grep \"{gistfile}\""
-            cmd_results = subprocess.check_output(list_cmd, shell=True, stderr=subprocess.PIPE)
-            #subprocess is/was storing the results of the cmd as a byte object
-            #needed to decode the byte object to a string 
-            glist = cmd_results.decode('utf-8')
-            print(f"\nStoring:\n{glist} as var for later use\n")
-            print(f"\nDELETING... {glist}")
-            del_glist = ("gist delete %s" % glist)
-            subprocess.run(del_glist, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
-            break
-        except subprocess.CalledProcessError as e:
-            create_cmd = f"gist create --public \"{gistfile}\" /home/pi/Desktop/{portfolio}.csv"
-            subprocess.check_output(create_cmd, shell=True, stderr=subprocess.PIPE)
-            new_gist = subprocess.check_output(list_cmd, shell=True, stderr=subprocess.PIPE)
-            new_gist_decoded = new_gist.decode('utf-8')
-            print(e)
-            break
+    try:  
+        gistfile = file
+        # module used
+        ## command to run - storing fo##
+        list_cmd = f"gist list | grep \"{gistfile}\""
+        cmd_results = subprocess.check_output(list_cmd, shell=True, stderr=subprocess.PIPE)
+        #subprocess is/was storing the results of the cmd as a byte object
+        #needed to decode the byte object to a string 
+        glist = cmd_results.decode('utf-8')
+        print(f"\nStoring:\n{glist} as var for later use\n")
+        print(f"\nDELETING... {glist}")
+        del_glist = ("gist delete %s" % glist)
+        subprocess.run(del_glist, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
+        # break
+    except subprocess.CalledProcessError as e:
+        create_cmd = f"gist create --public \"{gistfile}\" /home/pi/Desktop/{portfolio}.csv"
+        subprocess.check_output(create_cmd, shell=True, stderr=subprocess.PIPE)
+        new_gist = subprocess.check_output(list_cmd, shell=True, stderr=subprocess.PIPE)
+        new_gist_decoded = new_gist.decode('utf-8')
+        print(e)
+        # break
     gistfile = 'all_positions'
     print(f"creating gist with name \"{gistfile}\"")
     ######## RENAME DESKTOP FILE TO REUSEABLE VAR
@@ -132,13 +134,19 @@ def push_csv(file,portfolio):
     list_cmd = f"gist list | grep \"{gistfile}\""
     new_gist = subprocess.check_output(list_cmd, shell=True, stderr=subprocess.PIPE)
     new_gist_decoded = new_gist.decode('utf-8')
-    print(f"\nNew Gist Name and ID:\n{new_gist_decoded}")
-    print(f"\nView the gist here: https://gist.github.com/engineertree5")
+    temp_val = new_gist_decoded.split()
+    gist_decoded = temp_val[0]
+    df = pd.read_csv('/home/pi/Desktop/all_positions.csv')
+    pct_change = df['overall_%_gain'][0]
+    total_count = df['PS_TTM'].count()
+    print(f"\nNew Gist Name and ID:\n{gist_decoded}")
+    tweet_status = f"YTD Change: {pct_change}%\n# of positions: {total_count}\nView performance here (all_positions.csv): https://gist.github.com/engineertree5"
+    api.update_status(status=tweet_status)
+    
+# etrade_portfolio = 'etradeport'
+all_holdings = 'all_positions'
+# robinhood_portfolio = 'robinport'
 
-etrade_portfolio = 'etradeport'
-all_positions = 'all_positions'
-robinhood_portfolio = 'robinport'
-
-# get_portfolio(all_positions) #insert which porfolio you would want to use
-push_csv(all_positions,all_positions)
+get_portfolio(all_holdings) #insert which porfolio you would want to use
+push_csv(all_holdings,all_holdings)
 #push file to github / back to google_sheets

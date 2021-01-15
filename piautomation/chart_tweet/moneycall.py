@@ -25,7 +25,7 @@ user = api.get_user('lordfili')
 
 
 # GLOBAL VARS
-watchlist = ['MSFT', 'V', 'DLR', 'CONE', 'PING', 'AMD', 'BEP', 'DDOG', 'ADBE', 'CHWY', 'TTD', 'ADSK', 'SEDG', 'DOCU', 'ZS', 'NVDA',  'BYND', 'RDFN', 'ROKU', 'TDOC', 'ERIC', 'TCEHY', 'PINS', 'FSLY', 'ARKW', 'MELI', 'SE', 'TSM', 'APPF', 'ATVI', 'TTWO', 'ETSY', 'ADYEY', 'ZG', 'CRM', 'SQ', 'RGEN', 'SLP', 'RKT', 'SMLR', 'CRWD']
+watchlist = ['CRWD', 'FTCH', 'MGNI', 'MWK','LSPD', 'BL', 'AMD', 'NNOX', 'JMIA', 'FLGT', 'CHWY', 'CRWD', 'DDOG', 'DOCU', 'LMND', 'ETSY', 'AAXN', 'MELI', 'PTON', 'ADSK', 'PINS', 'RDFN', 'RGEN', 'BLFS', 'ROKU', 'SE', 'SHOP', 'SMLR', 'SQ', 'OM', 'TDOC', 'TTD', 'ZG', 'MMEDF']
 chart_dir = '/home/pi/Documents/automation/awtybot/'
 days = 365 # Stock data to chart against
 
@@ -67,16 +67,21 @@ def candle_picks():
             # raise RuntimeError('data is empty')
         else:
             print('MARKET OPEN!')
-        
+        df['10d_SMA'] = df.Close.rolling(window=10).mean()
         df['200d_EMA'] = df.Close.ewm(span=200,min_periods=0,adjust=False,ignore_na=False).mean()
         df['50d_EMA'] = df.Close.ewm(span=50,min_periods=0,adjust=False,ignore_na=False).mean()     
-        df['20d_EMA'] = df.Close.ewm(span=20,min_periods=0,adjust=False,ignore_na=False).mean()     
-        df['26d_EMA'] = df.Close.ewm(span=26,min_periods=0,adjust=False,ignore_na=False).mean()     
+        df['20d_EMA'] = df.Close.ewm(span=20,min_periods=0,adjust=False,ignore_na=False).mean()
+        df['26d_EMA'] = df.Close.ewm(span=26,min_periods=0,adjust=False,ignore_na=False).mean()          
+        df['21d_EMA'] = df.Close.ewm(span=21,min_periods=0,adjust=False,ignore_na=False).mean()     
         df['12d_EMA'] = df.Close.ewm(span=12,min_periods=0,adjust=False,ignore_na=False).mean()   
 
         #calculate the MCAD
         df['mcad'] = df['12d_EMA'] - df['26d_EMA']
         df['macdsignal'] = df['mcad'].ewm(span=9, adjust=False).mean()
+
+        #Pull in volume from dataframe
+        df_volume = df['Volume'].resample('10D').sum()
+
 
         df_ohlc = df['Adj Close'].resample('W-Fri').ohlc()
 
@@ -85,14 +90,17 @@ def candle_picks():
         # dates is just a regular column. Next, we convert it
         df_ohlc['Date'] = df_ohlc['Date'].map(mdates.date2num)
 
-        ax1 = plt.subplot2grid((6,1), (0,0), rowspan=4, colspan=1, title=f"${stock_pick} STOCK")
-        ax2 = plt.subplot2grid((6,1), (5,0), rowspan=1, colspan=1, sharex=ax1, title="MACD")
-        
+        ax1 = plt.subplot2grid((6,1), (0,0), rowspan=4, colspan=1, title=f"${stock_pick} {s_name}")
+
+        # ax2 = plt.subplot2grid((6,1), (5,0), rowspan=1, colspan=1, sharex=ax1, title="MACD")
+
         candlestick_ohlc(ax1, df_ohlc.values, width=2, colorup='g', alpha=0.7)
 
-        ax2.plot(df.index, df[['macdsignal']], label='Signal')
-        ax2.plot(df.index, df[['mcad']], label='MCAD')
-        ax1.plot(df.index, df[['20d_EMA']], label='20d_EMA')
+        # ax2.plot(df.index, df[['macdsignal']], label='Signal')
+        # ax2.plot(df.index, df[['mcad']], label='MCAD')
+        ax2 = plt.subplot2grid((6,1), (5,0), rowspan=1, colspan=1, sharex=ax1, label='Volume')
+        ax2.fill_between(df_volume.index.map(mdates.date2num), df_volume.values, 0)
+        ax1.plot(df.index, df[['21d_EMA']], label='21d_EMA')
         ax1.plot(df.index, df[['50d_EMA']], label='50d_EMA')
         ax1.plot(df.index, df[['200d_EMA']], label='200d_EMA')
         ax1.xaxis_date() # converts the axis from the raw mdate numbers to dates.
