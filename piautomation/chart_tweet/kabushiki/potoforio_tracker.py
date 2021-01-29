@@ -82,6 +82,9 @@ def get_portfolio(portfolio):
             print(f'{symbol} sector not found {sector}')
         except TypeError as err:
             print(f'{symbol} showing {err}')
+            PS_TTM = 'Nan'
+            print('setting Nan for PS_TTM')
+            pass
         except IndexError as err:
             print(f'{symbol} showing {err}')
     try:
@@ -126,22 +129,29 @@ def push_csv(file,portfolio):
         new_gist_decoded = new_gist.decode('utf-8')
         print(e)
         # break
-    gistfile = 'all_positions'
-    print(f"creating gist with name \"{gistfile}\"")
-    ######## RENAME DESKTOP FILE TO REUSEABLE VAR
-    create_cmd = f"gist create --public \"{gistfile}\" /home/pi/Desktop/{portfolio}.csv"
-    subprocess.check_output(create_cmd, shell=True, stderr=subprocess.PIPE)
-    list_cmd = f"gist list | grep \"{gistfile}\""
-    new_gist = subprocess.check_output(list_cmd, shell=True, stderr=subprocess.PIPE)
-    new_gist_decoded = new_gist.decode('utf-8')
-    temp_val = new_gist_decoded.split()
-    gist_decoded = temp_val[0]
-    df = pd.read_csv('/home/pi/Desktop/all_positions.csv')
-    pct_change = df['overall_%_gain'][0]
-    total_count = df['PS_TTM'].count()
-    print(f"\nNew Gist Name and ID:\n{gist_decoded}")
-    tweet_status = f"YTD Change: {pct_change}%\n# of positions: {total_count}\nView performance here (all_positions.csv): https://gist.github.com/engineertree5"
-    api.update_status(status=tweet_status)
+    except requests.exceptions.HTTPError:
+        print('carry on')
+    except:
+        print('http1 error')
+    try:
+        gistfile = 'all_positions'
+        print(f"creating gist with name \"{gistfile}\"")
+        ######## RENAME DESKTOP FILE TO REUSEABLE VAR
+        create_cmd = f"gist create --public \"{gistfile}\" /home/pi/Desktop/{portfolio}.csv"
+        subprocess.check_output(create_cmd, shell=True, stderr=subprocess.PIPE)
+        list_cmd = f"gist list | grep \"{gistfile}\""
+        new_gist = subprocess.check_output(list_cmd, shell=True, stderr=subprocess.PIPE)
+        new_gist_decoded = new_gist.decode('utf-8')
+        temp_val = new_gist_decoded.split()
+        gist_decoded = temp_val[0]
+        df = pd.read_csv('/home/pi/Desktop/all_positions.csv')
+        pct_change = df['overall_%_gain'][0]
+        total_count = df['PS_TTM'].count()
+        print(f"\nNew Gist Name and ID:\n{gist_decoded}")
+        tweet_status = f"YTD Change: {pct_change}%\n# of positions: {total_count}\nView performance here (all_positions.csv): https://gist.github.com/engineertree5"
+        #api.update_status(status=tweet_status)
+    except:
+        print('something went wrong')
     
 # etrade_portfolio = 'etradeport'
 all_holdings = 'all_positions'
