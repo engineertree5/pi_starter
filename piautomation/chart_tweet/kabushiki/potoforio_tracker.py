@@ -8,6 +8,8 @@ import subprocess
 import math
 import gspread
 from os import system
+import json
+import requests
 ###
 import tweepy
 from secrets import *
@@ -16,7 +18,7 @@ from secrets import *
 # Pull in .csv file which has stock picks
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_secret)
-
+token = token
 # constructing API instance
 api = tweepy.API(auth)
 user = api.get_user('lordfili')
@@ -51,9 +53,11 @@ def get_portfolio(portfolio):
     for symbol in symbol_set:
         try:
             company = yf.Ticker(f'{symbol}')
-            sector = company.info['sector']
+            # sector = company.info['sector']
             symbol = company.info['symbol']
             priceToSalesTrailing12Months = company.info["priceToSalesTrailing12Months"]
+            if priceToSalesTrailing12Months is None:
+                priceToSalesTrailing12Months = 0
             shortName = company.get_info()['shortName']
             fiftyTwoWeekLow = company.info["fiftyTwoWeekLow"]
             fiftyTwoWeekHigh = company.info["fiftyTwoWeekHigh"]
@@ -69,7 +73,7 @@ def get_portfolio(portfolio):
             # previousClose = company.info['previousClose']
             market_close = get_close(company)
             #### Assignments take place
-            df.loc[df['Symbol'] == f'{symbol}', 'sector'] = f'{sector}' # not necessary right now
+            # df.loc[df['Symbol'] == f'{symbol}', 'sector'] = f'{sector}' # not necessary right now
             df.loc[df['Symbol'] == f'{symbol}', 'PS_TTM'] = f'{PS_TTM}'
             # df.loc[df['Symbol'] == f'{symbol}', '200d_ma'] = f'{_200d_ma}' # not necessary right now
             df.loc[df['Symbol'] == f'{symbol}', '50d_ma'] = f'{_50d_ma}'
@@ -97,7 +101,7 @@ def get_portfolio(portfolio):
                 
     except KeyError as err:
         print(f'error {KeyError}')
-
+    pd.set_option('mode.chained_assignment', None) # https://www.dataquest.io/blog/settingwithcopywarning/
     df.sort_values('Symbol')
     answer = int(df['total_gain%'].sum(skipna=True))
     total_count = df['PS_TTM'].count()
@@ -107,56 +111,92 @@ def get_portfolio(portfolio):
     
     df.to_csv(f'/home/pi/Desktop/{portfolio}.csv', index=False) #save results to file
 
-def push_csv(file,portfolio):
+def del_csv():
+    list_url = 'https://api.github.com/users/engineertree5/gists'
+    headers = {'Authorization': f'token {token}'}
+    r = requests.get(list_url, headers=headers)
+    cleanup = (r.json())
+
+    for gist in cleanup:
+        files = gist['files']
+        gist_id = gist['id']
+        try:
+            if files['all_positions.csv']['filename'] == 'all_positions.csv':
+                print(f'{gist_id} to be deleted')
+                print('deleteing gist')
+                del_url = f'https://api.github.com/gists/{gist_id}'
+                print(del_url)
+                r = requests.delete(del_url, headers=headers)
+                # print(r.json())
+            else:
+                print('notworking')
+        except KeyError as e:
+            print(f'{e}')
+
+def push_csv():
     try:  
-        gistfile = file
-        # module used
-        ## command to run - storing fo##
-        list_cmd = f"gist list | grep \"{gistfile}\""
-        cmd_results = subprocess.check_output(list_cmd, shell=True, stderr=subprocess.PIPE)
-        #subprocess is/was storing the results of the cmd as a byte object
-        #needed to decode the byte object to a string 
-        glist = cmd_results.decode('utf-8')
-        print(f"\nStoring:\n{glist} as var for later use\n")
-        print(f"\nDELETING... {glist}")
-        del_glist = ("gist delete %s" % glist)
-        subprocess.run(del_glist, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
-        # break
-    except subprocess.CalledProcessError as e:
-        create_cmd = f"gist create --public \"{gistfile}\" /home/pi/Desktop/{portfolio}.csv"
-        subprocess.check_output(create_cmd, shell=True, stderr=subprocess.PIPE)
-        new_gist = subprocess.check_output(list_cmd, shell=True, stderr=subprocess.PIPE)
-        new_gist_decoded = new_gist.decode('utf-8')
-        print(e)
-        # break
-    except requests.exceptions.HTTPError:
-        print('carry on')
-    except:
-        print('http1 error')
-    try:
-        gistfile = 'all_positions'
-        print(f"creating gist with name \"{gistfile}\"")
-        ######## RENAME DESKTOP FILE TO REUSEABLE VAR
-        create_cmd = f"gist create --public \"{gistfile}\" /home/pi/Desktop/{portfolio}.csv"
-        subprocess.check_output(create_cmd, shell=True, stderr=subprocess.PIPE)
-        list_cmd = f"gist list | grep \"{gistfile}\""
-        new_gist = subprocess.check_output(list_cmd, shell=True, stderr=subprocess.PIPE)
-        new_gist_decoded = new_gist.decode('utf-8')
-        temp_val = new_gist_decoded.split()
-        gist_decoded = temp_val[0]
         df = pd.read_csv('/home/pi/Desktop/all_positions.csv')
+        query_url = "https://api.github.com/gists"
+        sample = df.to_csv(index=False)
+        headers = {'Authorization': f'token {token}'}
+        r = requests.post(query_url, headers=headers, data=json.dumps({"public":True,'files':{"all_positions.csv":{"content":sample}}}))
+        print('gist updated')
         pct_change = df['overall_%_gain'][0]
         total_count = df['PS_TTM'].count()
-        print(f"\nNew Gist Name and ID:\n{gist_decoded}")
-        tweet_status = f"YTD Change: {pct_change}%\n# of positions: {total_count}\nView performance here (all_positions.csv): https://gist.github.com/engineertree5"
-        #api.update_status(status=tweet_status)
-    except:
-        print('something went wrong')
-    
-# etrade_portfolio = 'etradeport'
-all_holdings = 'all_positions'
-# robinhood_portfolio = 'robinport'
+        
+        losers = get_losers()
+        tweet_status = f"YTD Change: {pct_change}%\n# of positions: {total_count}\n{losers}\nView performance here (all_positions.csv): https://gist.github.com/engineertree5"
+        print(tweet_status)
+        api.update_status(status=tweet_status)
+    except IndexError as e:
+        print(e)
 
+def get_losers():
+    # Each column in a DataFrame is a Series. As a single column is selected, the returned object is a pandas Series.
+
+    df = pd.read_csv('/home/pi/Desktop/all_positions.csv')
+    df = df.sort_values(by = 'total_gain%')
+    losers = df[['Symbol', 'total_gain%']][0:3]
+    losers.reset_index(inplace=True)
+    # Stor df into list
+    symbol_list = []
+    gain_percent = []
+    for symbol in losers['Symbol']:
+        symbol_list.append('$' + symbol)
+
+    for percent in losers['total_gain%']:
+        gain_percent.append(percent)        
+
+    #convert to int to strings
+    new_list = [str(x) for x in gain_percent]
+    percent_list = []
+    for gain in new_list:
+        percent_list.append(gain + "%")
+
+    #combining 2 list into 1 dict
+    toploser = {}
+    for symbol in symbol_list:
+        for percent in percent_list:
+            toploser[symbol] = percent
+            percent_list.remove(percent)
+            break
+    
+    pretty_list = []
+    for loser in toploser:
+        pretty_list.append((loser,toploser[loser]))
+    
+    x = pretty_list[0] 
+    y = pretty_list[1] 
+    z = pretty_list[2]
+
+    a = ' '.join(x)
+    b = ' '.join(y)
+    c = ' '.join(z)
+
+    return f"Top Losers:\n{a}\n{b}\n{c}"
+
+all_holdings = 'all_positions'
 get_portfolio(all_holdings) #insert which porfolio you would want to use
-push_csv(all_holdings,all_holdings)
-#push file to github / back to google_sheets
+del_csv()
+push_csv()
+# get_losers()
