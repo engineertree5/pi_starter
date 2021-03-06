@@ -77,6 +77,7 @@ def get_portfolio(portfolio):
             df.loc[df['Symbol'] == f'{symbol}', 'PS_TTM'] = f'{PS_TTM}'
             # df.loc[df['Symbol'] == f'{symbol}', '200d_ma'] = f'{_200d_ma}' # not necessary right now
             df.loc[df['Symbol'] == f'{symbol}', '50d_ma'] = f'{_50d_ma}'
+            df.loc[df['Symbol'] == f'{symbol}', '200d_ma'] = f'{_200d_ma}'
             df.loc[df['Symbol'] == f'{symbol}', 'market_close'] = f'{market_close}'
             df.loc[df['Symbol'] == f'{symbol}', 'market_cap'] = f'{market_cap}'
 
@@ -95,9 +96,11 @@ def get_portfolio(portfolio):
         df['market_close'] = pd.to_numeric(df['market_close']) #convert to numeric value
         df['purchase_price'] = pd.to_numeric(df['purchase_price']) #convert to numeric value
         df['50d_ma'] = pd.to_numeric(df['50d_ma']) #convert to numeric value
+        df['200d_ma'] = pd.to_numeric(df['200d_ma']) #convert to numeric value
         df['total_gain%'] = pd.to_numeric(df['total_gain%']) #convert to numeric value
         df['total_gain%'] = ((df['market_close'] - df['purchase_price']) / df['purchase_price'] * 100 ).round(2)
         df['above_50dma'] = np.where((df['market_close'] > df['50d_ma']), True, False)
+        df['above_200dma'] = np.where((df['market_close'] > df['200d_ma']), True, False)
                 
     except KeyError as err:
         print(f'error {KeyError}')
