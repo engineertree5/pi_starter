@@ -7,20 +7,16 @@ import pandas as pd
 import pandas_datareader.data as web
 import mplfinance as mpf
 
-
 import tweepy
 from secrets import *
 
-#### FOR RUNNING HEADLESS MODE
-matplotlib.use('Agg')
-# will need to create env var for running headless. 
-# export MPLBACKEND=Agg
-
+#### FOR RUNNING HEADLESS MODE ### export MPLBACKEND=Agg
+matplotlib.use('Agg') # will need to create env var for running headless. 
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_secret)
 
-# constructing API instance
+# constructing twitter API instance
 api = tweepy.API(auth)
 user = api.get_user('lordfili')
 
@@ -30,11 +26,10 @@ start = dt.datetime(today.year -1, today.month,today.day) # current day
 end = dt.datetime(today.year, today.month,today.day) # X days ago
 d_dash = today.strftime("%Y-%m-%d")
 
-
 #### Stock Watchlist, data directory, days of chart
 chart_dir = '/home/pi/Documents/automation/awtybot/'
 days = 365 # Stock data to chart against
-stocklist = ['ADSK', 'AMD', 'AMRS', 'AMZN', 'AXN', 'BEAM', 'BL', 'BLFS', 'CARA', 'CHWY', 'CMPS', 'CRWD', 'DDOG', 'DOCU', 'ETSY', 'FLGT', 'FTCH', 'JMIA','JYNT', 'KOPN', 'KTOS', 'LMND', 'LSPD', 'MELI', 'MGNI', 'MMEDF', 'MWK', 'NARI', 'NNOX', 'OM', 'ORMP', 'PGNY', 'PINS', 'PLTR', 'PSNL', 'PTON', 'RDFN', 'RGEN', 'ROKU', 'SE', 'SHOP', 'SMLR', 'SDGR', 'SQ', 'SWAV', 'TDOC', 'TTD', 'WIMI', 'ZG']
+stocklist = ['ADSK', 'AMD', 'AMRS', 'AMZN', 'BEAM', 'BL', 'BLFS','BIOX', 'CARA', 'CLPT', 'CHWY', 'CMPS', 'CRWD', 'DDOG', 'DOCU', 'ETSY', 'FLGT', 'FTCH', 'JMIA', 'JOE', 'JYNT', 'KOPN', 'KTOS', 'LMND', 'LSPD', 'MELI', 'MGNI', 'MMEDF', 'MWK', 'NARI', 'NNOX', 'OM', 'ORMP', 'PGNY', 'PINS', 'PLTR', 'PSNL', 'PTON', 'RDFN', 'RGEN', 'ROKU', 'SE', 'SKLZ', 'SHOP', 'SMLR', 'SDGR', 'SQ', 'SWAV', 'TDOC', 'TTD', 'WIMI', 'U', 'XPEL', 'ZG']
 
 sample_selection = sample(stocklist, 4)
 

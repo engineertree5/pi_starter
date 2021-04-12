@@ -25,7 +25,7 @@ user = api.get_user('lordfili')
 
 
 # GLOBAL VARS
-watchlist = ['CRWD', 'FTCH', 'MGNI', 'MWK','LSPD', 'BL', 'AMD', 'NNOX', 'JMIA', 'FLGT', 'CHWY', 'CRWD', 'DDOG', 'DOCU', 'LMND', 'ETSY', 'AAXN', 'MELI', 'PTON', 'ADSK', 'PINS', 'RDFN', 'RGEN', 'BLFS', 'ROKU', 'SE', 'SHOP', 'SMLR', 'SQ', 'OM', 'TDOC', 'TTD', 'ZG', 'MMEDF']
+watchlist = ['ADSK', 'AMD', 'AMRS', 'AMZN', 'AXN', 'BEAM', 'BL', 'BLFS', 'CARA', 'CHWY', 'CMPS', 'CRWD', 'CRWD', 'DDOG', 'DOCU', 'ETSY', 'FLGT', 'FLGT', 'FTCH', 'JMIA', 'KOPN', 'KTOS', 'LMND', 'LSPD', 'MEDS', 'MELI', 'MGNI', 'MMEDF', 'MWK', 'NARI', 'NNOX', 'OM', 'ORMP', 'PGNY', 'PINS', 'PLTR', 'PSNL', 'PTON', 'RDFN', 'RGEN', 'ROKU', 'SE', 'SHOP', 'SMLR', 'SQ', 'SWAV', 'TDOC', 'TTD', 'WIMI', 'ZG']
 chart_dir = '/home/pi/Documents/automation/awtybot/'
 days = 365 # Stock data to chart against
 
@@ -59,14 +59,14 @@ def candle_picks():
         #CHECK TO SEE IF MARKETS ARE OPEN
         invert_df = df.sort_index(axis=0, ascending=False)
         mkt_date_check = invert_df.loc[d_dash]
-        if mkt_date_check.empty == True:
-            print('dataframe empty!\n!!MARKET CLOSED!!')
-            print('exiting')
-            market_closed()
-            exit(1)
-            # raise RuntimeError('data is empty')
-        else:
-            print('MARKET OPEN!')
+        # if mkt_date_check.empty == True:
+        #     print('dataframe empty!\n!!MARKET CLOSED!!')
+        #     print('exiting')
+        #     market_closed()
+        #     exit(1)
+        #     # raise RuntimeError('data is empty')
+        # else:
+        #     print('MARKET OPEN!')
         df['10d_SMA'] = df.Close.rolling(window=10).mean()
         df['200d_EMA'] = df.Close.ewm(span=200,min_periods=0,adjust=False,ignore_na=False).mean()
         df['50d_EMA'] = df.Close.ewm(span=50,min_periods=0,adjust=False,ignore_na=False).mean()     
@@ -92,19 +92,20 @@ def candle_picks():
 
         ax1 = plt.subplot2grid((6,1), (0,0), rowspan=4, colspan=1, title=f"${stock_pick} {s_name}")
 
-        # ax2 = plt.subplot2grid((6,1), (5,0), rowspan=1, colspan=1, sharex=ax1, title="MACD")
+        ax2 = plt.subplot2grid((6,1), (5,0), rowspan=1, colspan=1, sharex=ax1, title="MACD")
 
         candlestick_ohlc(ax1, df_ohlc.values, width=2, colorup='g', alpha=0.7)
 
-        # ax2.plot(df.index, df[['macdsignal']], label='Signal')
-        # ax2.plot(df.index, df[['mcad']], label='MCAD')
-        ax2 = plt.subplot2grid((6,1), (5,0), rowspan=1, colspan=1, sharex=ax1, label='Volume')
-        ax2.fill_between(df_volume.index.map(mdates.date2num), df_volume.values, 0)
+        ax2.plot(df.index, df[['macdsignal']], label='Signal')
+        ax2.plot(df.index, df[['mcad']], label='MCAD')
+
+        # ax2 = plt.subplot2grid((6,1), (5,0), rowspan=1, colspan=1, sharex=ax1, label='Volume')
+        # ax2.fill_between(df_volume.index.map(mdates.date2num), df_volume.values, 0)
         ax1.plot(df.index, df[['21d_EMA']], label='21d_EMA')
         ax1.plot(df.index, df[['50d_EMA']], label='50d_EMA')
         ax1.plot(df.index, df[['200d_EMA']], label='200d_EMA')
         ax1.xaxis_date() # converts the axis from the raw mdate numbers to dates.
-        ax1.legend()
+        # ax1.legend(['21d_EMA'])
         ax2.legend()
         plt.savefig(f'{chart_dir}{stock_pick}.png', bbox_inches='tight')
         # plt.show()
@@ -144,6 +145,7 @@ def market_closed():
 
 def main():
     stock_list = candle_picks()
+    print(stock_list)
     update_status(stock_list)
 
 if __name__ == "__main__":
