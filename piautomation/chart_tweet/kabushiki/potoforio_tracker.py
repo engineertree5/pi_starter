@@ -46,26 +46,33 @@ def get_portfolio(portfolio):
     gc = gspread.service_account()
     sh = gc.open(portfolio)
     df = pd.DataFrame(sh.sheet1.get_all_records())
+    print(f'building Dataframe from {portfolio}')
     symbol_set = df['Symbol'] #assigning Symbol column to var
     # df['sector'] = np.nan #creating column called 'sector' and storing 'NaN' as place holder value. 
     df['PS_TTM'] = np.nan
-    # df = df['gains'] = df['Quantity'] - df['total_gain%']
+    # df = df['gains'] = df['Quantity'] - df['total_gain_pct']
     for symbol in symbol_set:
         try:
             company = yf.Ticker(f'{symbol}')
+            print(f'pulling fundamentals for {symbol}')
             # sector = company.info['sector']
             symbol = company.info['symbol']
             priceToSalesTrailing12Months = company.info["priceToSalesTrailing12Months"]
             if priceToSalesTrailing12Months is None:
                 priceToSalesTrailing12Months = 0
+                print(f'priceToSalesTrailing12Months set to 0 for {symbol}')
             shortName = company.get_info()['shortName']
             fiftyTwoWeekLow = company.info["fiftyTwoWeekLow"]
             fiftyTwoWeekHigh = company.info["fiftyTwoWeekHigh"]
+            print(f'52wk H{fiftyTwoWeekHigh}')
             fiftyDayAverage = company.info["fiftyDayAverage"]
-            twoHundredDayAverage = company.info["twoHundredDayAverage"]
-            
+            print(f'50dma {fiftyDayAverage}')
+            twoHundredDayAverage = company.info["twoHundredDayAverage"]  
+            print(f'200davg {twoHundredDayAverage}')          
             marketCap = float(company.info['marketCap'])
+
             market_cap = get_mkt_cap(marketCap)
+            print(f'{market_cap}')
 
             PS_TTM = round(priceToSalesTrailing12Months, 2)
             _50d_ma = round(fiftyDayAverage, 2)
@@ -80,7 +87,7 @@ def get_portfolio(portfolio):
             df.loc[df['Symbol'] == f'{symbol}', '200d_ma'] = f'{_200d_ma}'
             df.loc[df['Symbol'] == f'{symbol}', 'market_close'] = f'{market_close}'
             df.loc[df['Symbol'] == f'{symbol}', 'market_cap'] = f'{market_cap}'
-
+            print(f'finished with {symbol}\n')
         except KeyError as err:
             sector = 'N/A'
             symbol = company.info['symbol']
@@ -93,12 +100,13 @@ def get_portfolio(portfolio):
         except IndexError as err:
             print(f'{symbol} showing {err}')
     try:
+        print(f'\ncreating dataframe for {symbol}')
         df['market_close'] = pd.to_numeric(df['market_close']) #convert to numeric value
         df['purchase_price'] = pd.to_numeric(df['purchase_price']) #convert to numeric value
         df['50d_ma'] = pd.to_numeric(df['50d_ma']) #convert to numeric value
         df['200d_ma'] = pd.to_numeric(df['200d_ma']) #convert to numeric value
-        df['total_gain%'] = pd.to_numeric(df['total_gain%']) #convert to numeric value
-        df['total_gain%'] = ((df['market_close'] - df['purchase_price']) / df['purchase_price'] * 100 ).round(2)
+        df['total_gain_pct'] = pd.to_numeric(df['total_gain_pct']) #convert to numeric value
+        df['total_gain_pct'] = ((df['market_close'] - df['purchase_price']) / df['purchase_price'] * 100 ).round(2)
         df['above_50dma'] = np.where((df['market_close'] > df['50d_ma']), True, False)
         df['above_200dma'] = np.where((df['market_close'] > df['200d_ma']), True, False)
                 
@@ -106,12 +114,13 @@ def get_portfolio(portfolio):
         print(f'error {KeyError}')
     pd.set_option('mode.chained_assignment', None) # https://www.dataquest.io/blog/settingwithcopywarning/
     df.sort_values('Symbol')
-    answer = int(df['total_gain%'].sum(skipna=True))
+    answer = int(df['total_gain_pct'].sum(skipna=True))
     total_count = df['PS_TTM'].count()
     total_percent = answer / total_count
-    df['overall_%_gain'] ='' # creating a column called overall_%_gain
-    df['overall_%_gain'][0] = round(total_percent, 2) # w/ use of '({do_math_here})' we insert answer var into the 0 index of column
+    df['overall_pct_gain'] ='' # creating a column called overall_pct_gain
+    df['overall_pct_gain'][0] = round(total_percent, 2) # w/ use of '({do_math_here})' we insert answer var into the 0 index of column
     
+    print('saving csv')
     df.to_csv(f'/home/pi/Desktop/{portfolio}.csv', index=False) #save results to file
 
 def del_csv():
@@ -144,7 +153,7 @@ def push_csv():
         headers = {'Authorization': f'token {token}'}
         r = requests.post(query_url, headers=headers, data=json.dumps({"public":True,'files':{"all_positions.csv":{"content":sample}}}))
         print('gist updated')
-        pct_change = df['overall_%_gain'][0]
+        pct_change = df['overall_pct_gain'][0]
         total_count = df['PS_TTM'].count()
         
         losers = get_losers()
@@ -158,8 +167,8 @@ def get_losers():
     # Each column in a DataFrame is a Series. As a single column is selected, the returned object is a pandas Series.
 
     df = pd.read_csv('/home/pi/Desktop/all_positions.csv')
-    df = df.sort_values(by = 'total_gain%')
-    losers = df[['Symbol', 'total_gain%']][0:3]
+    df = df.sort_values(by = 'total_gain_pct')
+    losers = df[['Symbol', 'total_gain_pct']][0:3]
     losers.reset_index(inplace=True)
     # Stor df into list
     symbol_list = []
@@ -167,7 +176,7 @@ def get_losers():
     for symbol in losers['Symbol']:
         symbol_list.append('$' + symbol)
 
-    for percent in losers['total_gain%']:
+    for percent in losers['total_gain_pct']:
         gain_percent.append(percent)        
 
     #convert to int to strings

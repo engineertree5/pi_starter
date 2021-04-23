@@ -57,7 +57,7 @@ def stock_pick(symbol, company_name):
     df.to_csv(f'{symbol}.csv')
     df = pd.read_csv(f'{symbol}.csv', parse_dates=True, index_col=0)
     # mpf.plot(df,**kwargs,style='yahoo',tight_layout=True,savefig=dict(fname='tsave100.png',dpi=500))
-    axes = mpf.plot(df,style='yahoo', **kwargs,fill_between=0.03,datetime_format="%m-%d-%Y", xrotation=0,
+    axes = mpf.plot(df,style='yahoo', **kwargs,fill_between=0.03,datetime_format="%b-%Y", xrotation=0,
     scale_width_adjustment=dict(candle=1.60), tight_layout=True, ylabel='', ylabel_lower='', savefig=dict(fname=f'{symbol}.png',dpi=500))
 
 def update_status(pick_info):
