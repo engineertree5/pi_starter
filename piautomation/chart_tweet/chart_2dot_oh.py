@@ -32,7 +32,8 @@ d_dash = today.strftime("%Y-%m-%d")
 #### Stock Watchlist, data directory, days of chart
 chart_dir = '/home/pi/Documents/automation/awtybot/'
 days = 365 # Stock data to chart against
-stocklist = ['ADSK', 'AMD', 'AMRS', 'AMZN', 'BEAM', 'BL', 'BLFS','BIOX', 'CARA', 'CLPT', 'CHWY', 'CMPS', 'CRWD', 'DDOG', 'DOCU', 'ETSY','EGLX', 'FLGT', 'FTCH', 'INMD', 'JMIA', 'JOE', 'JYNT', 'KOPN', 'KTOS', 'LMND', 'LSPD', 'MELI', 'MGNI', 'MKTY', 'NARI', 'NNOX', 'OM', 'ORMP', 'PGNY', 'PINS', 'PLTR', 'PSNL', 'PTON', 'RDFN', 'RGEN', 'ROKU', 'SE', 'SKLZ', 'SHOP', 'SMLR', 'SDGR', 'SQ', 'SWAV', 'TDOC', 'TTD', 'TMDX', 'WIMI', 'U', 'XPEL', 'ZG']
+# Sort alpabeticaly -- $:sorted(stocklist)
+stocklist = ['ADSK', 'AI', 'AMD', 'AMRS', 'AMZN', 'AXON', 'BEAM', 'BL', 'BLFS','BIOX', 'CLPT', 'CHWY', 'CMPS', 'CRWD', 'DDOG', 'DOCU', 'DRNA', 'ETSY','EGLX', 'FLGT', 'FTCH', 'INMD', 'JMIA', 'JOE', 'JYNT', 'KOPN', 'KTOS', 'LMND', 'LSPD', 'MELI', 'MGNI', 'MKTY', 'NARI', 'NNOX', 'OM', 'ORMP', 'PGNY', 'PINS', 'PLTR', 'PSNL', 'PTON', 'RDFN', 'RGEN', 'ROKU', 'SE', 'SKLZ', 'SHOP', 'SMLR', 'SDGR', 'SQ', 'SWAV', 'TDOC', 'TTD', 'TMDX', 'WIMI', 'U', 'XPEL', 'ZG']
 
 sample_selection = sample(stocklist, 4)
 
