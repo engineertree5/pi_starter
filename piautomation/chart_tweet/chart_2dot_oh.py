@@ -4,6 +4,7 @@ import csv
 import datetime as dt
 import matplotlib
 import pandas as pd
+import fundamentals
 import pandas_datareader.data as web
 import mplfinance as mpf
 
@@ -33,7 +34,7 @@ d_dash = today.strftime("%Y-%m-%d")
 chart_dir = '/home/pi/Documents/automation/awtybot/'
 days = 365 # Stock data to chart against
 # Sort alpabeticaly -- $:sorted(stocklist)
-stocklist = ['AMD', 'AMRS', 'AXON', 'BOMN', 'BLFS', 'BIOX', 'CDXS', 'CLPT', 'CRWD', 'DDOG', 'DOCU', 'ETSY','EGLX', 'FLGT', 'GLBE', 'INMD', 'JOE', 'JYNT', 'KOPN', 'LMND', 'RICK', 'MELI', 'MGNI', 'NET', 'NARI', 'NNOX', 'NIO', 'NVDA', 'OM', 'ORMP', 'PINS', 'PLTR', 'PSNL', 'ROKU', 'SE', 'SOFI', 'SKLZ', 'SLNH', 'SHOP', 'SMLR', 'SDGR', 'SQ', 'SWAV', 'TDOC', 'TMDX', 'WIMI', 'VERI', 'U', 'XPEV', 'XPEL']
+stocklist = ['AMD', 'AMRS', 'AXON', 'BOMN', 'BLFS', 'BIOX', 'CDXS', 'CLPT', 'CRWD', 'DDOG', 'DOCU', 'ETSY','EGLX', 'FLGT', 'GLBE', 'INMD', 'JOE', 'JYNT', 'KOPN', 'KRYS', 'LMND', 'RICK', 'MELI', 'MGNI', 'MQ', 'NET', 'NARI', 'NNOX', 'NIO', 'NVDA', 'NVCR', 'OM', 'ORMP', 'PINS', 'PLTR', 'PSNL', 'ROKU', 'SE', 'SOFI', 'SKLZ', 'SLNH', 'SHOP', 'SMLR', 'SDGR', 'SQ', 'SWAV', 'TDOC', 'TMDX', 'WIMI', 'VERI', 'U', 'UPST', 'XPEV', 'XPEL']
 
 sample_selection = sample(stocklist, 4)
 
@@ -46,8 +47,7 @@ def get_stock_fundamentals(stock):
         shortName = '*'
         print(err)
         print(f'NO INFO: {stock}')
-    
-    # return pick_info
+
     return symbol, shortName
 
 
@@ -62,10 +62,12 @@ def stock_pick(symbol, company_name):
     df = pd.read_csv(f'{symbol}.csv', parse_dates=True, index_col=0)
     # mpf.plot(df,**kwargs,style='yahoo',tight_layout=True,savefig=dict(fname='tsave100.png',dpi=500))
     axes = mpf.plot(df,style='yahoo', **kwargs,fill_between=0.03,datetime_format="%b-%Y", xrotation=0,
-    scale_width_adjustment=dict(volume=0.4, candle=1.50), tight_layout=True, ylabel='', ylabel_lower='', savefig=dict(fname=f'{symbol}.png',dpi=500))
+    scale_width_adjustment=dict(volume=0.4, candle=1.50), tight_layout=True, ylabel='', ylabel_lower='', savefig=dict(fname=f'{chart_dir}{symbol}.png',dpi=500))
 
 def update_status(pick_info):
     # using tweepy API to update status
+    count = 0
+    print(pick_info)
     try:
         statement = []
         stock_list = []
@@ -73,15 +75,27 @@ def update_status(pick_info):
             statement.append(stock + " - " + shortname)
             stock_list.append(stock)
 
-        feels = f'200d=gr, 50=ylw, 20=blu\n${statement[0]}\n${statement[1]}\n${statement[2]}\n${statement[3]}\n'
-        print(feels)
-        print(f"{chart_dir}{stock_list[3]}.png")
-        media0 = api.media_upload(f"{chart_dir}{stock_list[0]}.png")
-        media1 = api.media_upload(f"{chart_dir}{stock_list[1]}.png")
-        media2 = api.media_upload(f"{chart_dir}{stock_list[2]}.png")
-        media3 = api.media_upload(f"{chart_dir}{stock_list[3]}.png")
-        api.update_status(status=feels, media_ids=[media0.media_id,media1.media_id,media2.media_id,media3.media_id])
-        print('tweet sent!\n',feels)
+            print(statement[count])
+            print("********")
+            print(stock)
+            print("********")
+            #Get Technical Info
+            techies = fundamentals.stock_class(stock)
+            stock_techies = techies.technicals()
+            full_tweet = f"{stock_techies}"
+            media = api.media_upload(f"{chart_dir}{stock_list[count]}.png")
+            first_tweet_id = api.update_status(status=full_tweet, media_ids=[media.media_id])
+            ## Chain Fundamental Tweet
+            ftID = first_tweet_id.id
+            fundy = fundamentals.stock_class(stock)
+            stock_fundy = fundy.basic_fundamentals()
+            fundy_tweet = f"{stock_fundy}"
+            api.update_status(status=fundy_tweet, in_reply_to_status_id=ftID, auto_populate_reply_metadata=True)
+            #replay to response ID with more fundamental info
+            print(f'tweet sent! {full_tweet}\n{fundy_tweet}')
+            print(len(full_tweet))
+            count +=1
+
     
     except tweepy.TweepError as e:
         print(e.reason)
