@@ -64,6 +64,7 @@ class stock_class:
             print(f'tweet Char Count: {len(tweet)}')
         return tweet
 
+
     def percent_conversion(self, value):
         try:
             percent = value * 100
@@ -148,7 +149,8 @@ class stock_class:
                 ps = round(company.info["priceToSalesTrailing12Months"], 2)
                 #
                 t_eps = company.info["trailingEps"]
-                trailingEPS = self.percent_conversion(t_eps)
+                trailingEPS = '${:,.2f}'.format(t_eps)
+
                 roa = company.info["returnOnAssets"]
                 roa_percent = self.percent_conversion(roa)
                 roe = company.info["returnOnEquity"]
@@ -163,15 +165,12 @@ class stock_class:
                 profit_margins_percent = self.percent_conversion(profit_margins)
                 gross_margins = company.info["grossMargins"]
                 gross_margins_percent = self.percent_conversion(gross_margins)
-                ##
-
 
                 # earningsGrowth
                 # revenuePerShare
                 # forwardEps
                 # revenueQuarterlyGrowth
                 # bookValue
-                # trailingEps
                 # threeYearAverageReturn
                 # earningsQuarterlyGrowth
                 # ytdReturn
@@ -195,7 +194,7 @@ class stock_class:
                 
                 # market_cap = get_mkt_cap(marketCap)
                 # return market_cap
-                tweet = f"${symbol}\nP/S(ttm): {ps}\nROE: {roe_percent}%\nROA: {roa_percent}%\nGross Profit: {gross_profits}\nGross Margin: {gross_margins_percent}%\nProfit Margins: {profit_margins_percent}%\nEPS(ttm): ${trailingEPS}"
+                tweet = f"${symbol}\nP/S(ttm): {ps}\nROE: {roe_percent}%\nROA: {roa_percent}%\nGross Profit: {gross_profits}\nGross Margin: {gross_margins_percent}%\nProfit Margins: {profit_margins_percent}%\nEPS(ttm): {trailingEPS}"
                 print(len(tweet))
                 print(tweet)
                 return tweet

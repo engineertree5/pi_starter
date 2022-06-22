@@ -34,7 +34,7 @@ d_dash = today.strftime("%Y-%m-%d")
 chart_dir = '/home/pi/Documents/automation/awtybot/'
 days = 365 # Stock data to chart against
 # Sort alpabeticaly -- $:sorted(stocklist)
-stocklist = ['AMD', 'AMRS', 'AXON', 'BOMN', 'BLFS', 'BIOX', 'CDXS', 'CLPT', 'CRWD', 'DDOG', 'DOCU', 'ETSY','EGLX', 'FLGT', 'GLBE', 'INMD', 'JOE', 'JYNT', 'KOPN', 'KRYS', 'LMND', 'RICK', 'MELI', 'MGNI', 'MQ', 'NET', 'NARI', 'NNOX', 'NIO', 'NVDA', 'NVCR', 'OM', 'ORMP', 'PINS', 'PLTR', 'PSNL', 'ROKU', 'SE', 'SOFI', 'SKLZ', 'SLNH', 'SHOP', 'SMLR', 'SDGR', 'SQ', 'SWAV', 'TDOC', 'TMDX', 'WIMI', 'VERI', 'U', 'UPST', 'XPEV', 'XPEL']
+stocklist = ['AMD', 'APPS', 'AMRS', 'AXON', 'BOMN', 'BLFS', 'BIOX', 'CDXS', 'CAT', 'CLPT', 'CRWD', 'DDOG', 'DOCU', 'ETSY','EGLX', 'FLGT', 'HYPR', 'GLBE', 'GXO', 'INMD', 'JOE', 'JYNT', 'KOPN', 'KKR', 'KRYS', 'LMND', 'RICK', 'MELI', 'MGNI', 'MQ', 'NET', 'NARI', 'NNOX', 'NIO', 'NVDA', 'NNI', 'NTDOY', 'NVCR', 'OM', 'ORMP', 'PINS', 'PLTR', 'PSNL', 'PUBM', 'ROKU', 'SE', 'SOFI', 'SKLZ', 'SLNH', 'SMH', 'SHOP', 'SMLR', 'SDGR', 'SQ', 'SWAV', 'TDOC', 'TMDX', 'TTD', 'WIMI', 'WST', 'VERI', 'U', 'UPST', 'XPEV', 'XPEL']
 
 sample_selection = sample(stocklist, 4)
 
